@@ -4,6 +4,7 @@ from scrapy import Request
 from python_assesment.items import NoticeItem
 
 
+# Parsing class to handle all the parsing
 class GazetteParseSpider:
     name = "gazette-parse"
 
@@ -39,6 +40,7 @@ class GazetteParseSpider:
         return response.css(".main-pane .full-notice .title::text").get()
 
 
+# Class for handling the crawling
 class GazetteCrawlSpider(scrapy.Spider):
     name = "gazette-crawl"
     total_pages = 15
@@ -49,6 +51,7 @@ class GazetteCrawlSpider(scrapy.Spider):
     notice_url_t = "https://www.thegazette.co.uk{param}"
 
     def parse(self, response):
+        # urls of 1 to 15 pages (pagination handling)
         yield from [
             Request(
                 url=self.pagination_url_t.format(param=page),
@@ -58,13 +61,16 @@ class GazetteCrawlSpider(scrapy.Spider):
         ]
 
     def parse_products(self, response):
+        # handling the notices on each page
         notices_links = response.css(".notice-feed .content article .feed-item .btn-full-notice::attr(href)").getall()
 
+        # list of all notices on single page
         params_list = [
             self.notice_url_t.format(param=notice_link)
             for notice_link in notices_links
         ]
 
+        # making request to individual pages
         yield from [
             Request(
                 url=url,
@@ -74,4 +80,5 @@ class GazetteCrawlSpider(scrapy.Spider):
         ]
 
     def parse_product(self, response):
+        # parsing the notice
         yield self.parser.parse(response)
